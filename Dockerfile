@@ -1,49 +1,24 @@
-# Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+FROM python:3.12-slim
 
-# Install the project into `/app`
-WORKDIR /app
-
-# Enable bytecode compilation
-ENV UV_COMPILE_BYTECODE=1
-
-# Copy from the cache instead of linking since it's a mounted volume
-ENV UV_LINK_MODE=copy
-
-# Install the project's dependencies using the lockfile and settings
-# This layer is cached separately from the project code for faster rebuilds
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-editable --extra full --no-default-groups
-
-# Then, add the rest of the project source code and install it
-# Installing separately from its dependencies allows optimal layer caching
-COPY . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-editable --extra full --no-default-groups
-
-# Final stage
-FROM python:3.12-slim-bookworm
-
-# Setup a non-root user
-RUN groupadd --system --gid 999 rendercv \
- && useradd --system --gid 999 --uid 999 --create-home rendercv
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # Set working directory
 WORKDIR /app
 
-# Copy the virtual environment from the builder stage
-COPY --from=builder --chown=rendercv:rendercv /app/.venv /app/.venv
+# Copy project files
+COPY pyproject.toml .
+COPY README.md .
+COPY src/ ./src/
+COPY rendercv/ ./rendercv/
 
-# Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
+# Install dependencies
+RUN uv pip install --system .
+RUN uv pip install --system "mcp[cli]" "uvicorn" "starlette"
 
-# Use the non-root user to run our application
-USER rendercv
+# Expose port
+ENV PORT=8080
+EXPOSE 8080
 
-# Set the entrypoint to the rendercv CLI (installed via pyproject.toml entry point)
-ENTRYPOINT ["rendercv"]
-
-# Default command shows help
-CMD ["--help"]
+# Run the server
+CMD ["python", "rendercv/mcp/server.py"]

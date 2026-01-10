@@ -38,12 +38,15 @@ readme = "README.md"
 requires-python = '>=3.12'
 # RenderCV depends on these packages. They are installed automatically when RenderCV is installed:
 dependencies = [
-    'Jinja2>=3.1.6',                # Generate Typst and Markdown files
-    'phonenumbers>=9.0.19',         # Validate phone numbers
-    'pydantic[email]>=2.10.6',      # Validate and parse input files
+    'Jinja2>=3.1.6', # Generate Typst and Markdown files
+    'phonenumbers>=9.0.19', # Validate phone numbers
+    'pydantic[email]>=2.10.6', # Validate and parse input files
     'pydantic-extra-types>=2.10.6', # Validate extra types
-    'ruamel.yaml>=0.18.10',         # Parse YAML files
-    'markdown>=3.10',               # Convert Markdown to HTML
+    'ruamel.yaml>=0.18.10', # Parse YAML files
+    'markdown>=3.10', # Convert Markdown to HTML
+    "mcp[cli]>=1.25.0",
+    "starlette>=0.52.1",
+    "uvicorn>=0.40.0",
 ]
 classifiers = [
     "Intended Audience :: Science/Research",

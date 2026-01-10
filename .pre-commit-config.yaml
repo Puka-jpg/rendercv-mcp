@@ -11,6 +11,7 @@ repos:
         args:
           - --skip=src/rendercv/schema/models/locale/other_locales/*
           - --exclude-file=schema.json
+          - --ignore-words-list=parial,branchs
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.10
     hooks:

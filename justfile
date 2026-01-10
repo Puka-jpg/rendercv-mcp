@@ -53,3 +53,13 @@ create-executable:
 # Utilities:
 count-lines:
   wc -l `find src -name '*.py'`
+
+# MCP:
+run-mcp-server:
+  uv run --frozen --all-extras python rendercv/mcp/server.py
+
+run-mcp-client:
+  uv run --frozen --all-extras python rendercv/mcp/client.py
+
+inspect:
+  npx @modelcontextprotocol/inspector
