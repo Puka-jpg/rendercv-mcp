@@ -29,6 +29,7 @@ logger = logging.getLogger("rendercv-mcp")
 
 # Initialize MCP Server
 mcp_server = Server("rendercv-mcp")
+BASE_URL = os.environ.get("BASE_URL", "http://207.180.224.154:8080")
 
 @mcp_server.list_tools()
 async def list_tools():
@@ -160,7 +161,7 @@ async def call_tool(name, arguments):
     raise ValueError(f"Tool {name} not found")
 
 # SSE & Starlette Setup
-sse = SseServerTransport("/messages")
+sse = SseServerTransport(f"{BASE_URL}/sse/messages")
 
 async def sse_app(scope, receive, send):
     """Raw ASGI app for SSE and Messages."""

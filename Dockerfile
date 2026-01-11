@@ -27,6 +27,7 @@ RUN uv pip install --system "mcp[cli]" "uvicorn" "starlette" "rendercv-fonts" "t
 ENV PORT=8080
 # This ensures Python looks in /app/src for the rendercv package logic
 ENV PYTHONPATH="/app/src:/app"
+ENV BASE_URL="http://207.180.224.154:8080"
 
 EXPOSE 8080
 
