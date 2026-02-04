@@ -16,7 +16,7 @@ from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.types import Tool, TextContent, EmbeddedResource, BlobResourceContents
 
-# Import RenderCV functionalities
+# RenderCV functionalities
 from rendercv.schema.json_schema_generator import generate_json_schema
 from rendercv.schema.models.design.built_in_design import available_themes
 from rendercv.schema.rendercv_model_builder import build_rendercv_dictionary_and_model
@@ -29,7 +29,7 @@ logger = logging.getLogger("rendercv-mcp")
 
 # Initialize MCP Server
 mcp_server = Server("rendercv-mcp")
-BASE_URL = os.environ.get("BASE_URL", "http://207.180.224.154:8080")
+BASE_URL = os.environ.get("BASE_URL", "http://localhost:9000")
 
 @mcp_server.list_tools()
 async def list_tools():
@@ -113,7 +113,6 @@ async def call_tool(name, arguments):
             return [TextContent(type="text", text="Error: yaml_content is required")]
 
         try:
-            # Use a temporary directory for generation since we only need the bytes
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = Path(temp_dir)
                 yaml_file_path = temp_path / f"{output_name}.yaml"
@@ -161,13 +160,24 @@ async def call_tool(name, arguments):
     raise ValueError(f"Tool {name} not found")
 
 # SSE & Starlette Setup
-sse = SseServerTransport(f"{BASE_URL}/sse/messages")
+sse = SseServerTransport("/sse/messages")
 
 async def sse_app(scope, receive, send):
-    """Raw ASGI app for SSE and Messages."""
     if scope["type"] == "http" and scope["method"] == "POST":
         await sse.handle_post_message(scope, receive, send)
     else:
+        # Check User-Agent to determine client type
+        headers = dict(scope.get("headers", []))
+        user_agent = headers.get(b"user-agent", b"").decode("utf-8").lower()
+        
+        # 3. DYNAMIC ENDPOINT CONFIGURATION
+        # Browsers/Inspector (Mozilla, etc.) AND node-fetch (Inspector Proxy): relative path
+        # Other Clients (Scripts/ADK):  absolute URL 
+        if "mozilla" in user_agent or "chrome" in user_agent or "safari" in user_agent or "node-fetch" in user_agent:
+             sse._endpoint = "/sse/messages"
+        else:
+            sse._endpoint = f"{BASE_URL}/sse/messages"
+        
         async with sse.connect_sse(scope, receive, send) as streams:
             await mcp_server.run(
                 streams[0],
@@ -186,5 +196,23 @@ middleware = [
 app = Starlette(debug=True, routes=routes, middleware=middleware)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    import sys
+    
+    # Check if running in stdio mode 
+    if len(sys.argv) > 1 and sys.argv[1] == "--stdio":
+        # Stdio mode - for local ADK integration
+        from mcp.server.stdio import stdio_server
+        
+        async def run_stdio():
+            async with stdio_server() as (read_stream, write_stream):
+                await mcp_server.run(
+                    read_stream,
+                    write_stream,
+                    mcp_server.create_initialization_options()
+                )
+        
+        asyncio.run(run_stdio())
+    else:
+        # SSE mode - for remote connections
+        port = int(os.environ.get("PORT", 9000))
+        uvicorn.run(app, host="0.0.0.0", port=port)
