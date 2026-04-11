@@ -65,7 +65,7 @@ classifiers = [
 
 [project.optional-dependencies]
 full = [
-    'typer>=0.20.0',         # Command-line interface
+    'typer>=0.24.1',         # Command-line interface
     'watchdog>=6.0.0',       # Monitor files for updates
     'typst>=0.14.4',         # Render PDF from Typst source files
     'rendercv-fonts>=0.5.1', # Font files for RenderCV
