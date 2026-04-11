@@ -45,7 +45,7 @@ dependencies = [
     'ruamel.yaml>=0.18.10', # Parse YAML files
     'markdown>=3.10', # Convert Markdown to HTML
     "mcp[cli]>=1.25.0",
-    "starlette>=0.52.1",
+    "starlette>=1.0.0",
     "uvicorn>=0.40.0",
 ]
 classifiers = [
